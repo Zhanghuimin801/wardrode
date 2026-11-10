@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F8F7F5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="我的衣橱">
+<title>我的衣橱 · 电子衣橱</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 7.5a2 2 0 1 1 2-2c0 1.2-1 2-2 2v3.2"/><path d="M12 10.7 3.6 16a1 1 0 0 0 .5 1.8h15.8a1 1 0 0 0 .5-1.8L12 10.7Z"/>
+        </svg>
+      </div>
+      <div class="brand-text"><strong>我的衣橱</strong><span>把喜欢的东西，好好收起来</span></div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btnExportTop" title="导出备份" aria-label="导出备份">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      </button>
+    </div>
+    <nav class="tabbar" id="tabbar" aria-label="主导航">
+      <button class="tab is-active" data-page="closet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>衣橱</span>
+      </button>
+      <button class="tab" data-page="add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>添加</span>
+      </button>
+      <button class="tab" data-page="outfit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4 4 6.5 6 10l2.5-.7L12 4l3 5.3L17.5 10l2-3.5L16 4a2 2 0 0 1-4 0 2 2 0 0 1-4 0Z"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg>
+        <span>穿搭</span>
+      </button>
+      <button class="tab" data-page="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        <span>统计</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="main">
+
+    <section class="page is-active" id="page-closet">
+      <div class="page-head">
+        <h1>我的衣橱</h1>
+        <p id="closetSummary">共 0 件单品</p>
+      </div>
+
+      <div class="filter-panel">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" id="searchInput" placeholder="搜索名称、品牌、标签" autocomplete="off">
+        </div>
+        <div class="filter-row">
+          <label class="select-wrap"><span>类别</span><select id="filterCategory"></select></label>
+          <label class="select-wrap"><span>颜色</span><select id="filterColor"></select></label>
+          <label class="select-wrap"><span>季节</span><select id="filterSeason"></select></label>
+          <label class="select-wrap"><span>排序</span><select id="filterSort">
+            <option value="recent">最近添加</option>
+            <option value="wear">穿得最多</option>
+            <option value="idle">最久没穿</option>
+            <option value="priceHigh">价格从高到低</option>
+            <option value="priceLow">价格从低到高</option>
+          </select></label>
+        </div>
+      </div>
+
+      <div id="itemGrid" class="item-grid"></div>
+
+      <div id="closetEmpty" class="empty-state" hidden>
+        <div class="empty-illustration" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5a2 2 0 1 1 2-2c0 1.2-1 2-2 2v3.2"/><path d="M12 10.7 3.6 16a1 1 0 0 0 .5 1.8h15.8a1 1 0 0 0 .5-1.8L12 10.7Z"/></svg>
+        </div>
+        <h2 id="emptyTitle">衣橱还是空的</h2>
+        <p id="emptyDesc">添加第一件衣服，或者先载入示例数据看看效果</p>
+        <div class="empty-actions">
+          <button class="btn btn-primary" id="btnEmptyAdd">添加单品</button>
+          <button class="btn btn-ghost" id="btnEmptyDemo">载入示例数据</button>
+        </div>
+      </div>
+
+      <button class="fab" id="fabAdd" aria-label="添加单品">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </section>
+
+    <section class="page" id="page-add">
+      <div class="page-head">
+        <h1 id="formTitle">添加单品</h1>
+        <p>照片和字段都可以之后修改</p>
+      </div>
+
+      <form id="itemForm" class="form-card" autocomplete="off">
+        <div class="photo-field">
+          <button type="button" class="photo-drop" id="photoDrop">
+            <img id="photoPreview" alt="单品照片预览" hidden>
+            <span class="photo-hint" id="photoHint">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h3l1.5-2h9L18 8h3v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8Z"/><circle cx="12" cy="13.5" r="3.5"/></svg>
+              <b>点击上传照片</b><small>支持 JPG / PNG / WebP，自动压缩</small>
+            </span>
+          </button>
+          <input type="file" id="photoInput" accept="image/*" hidden>
+          <button type="button" class="photo-remove" id="photoRemove" hidden>移除照片</button>
+        </div>
+
+        <div class="field-grid">
+          <label class="field field-full"><span>名称 <i>*</i></span><input type="text" id="fName" placeholder="例如：米白色亚麻衬衫" required maxlength="40"></label>
+          <label class="field"><span>类别</span><select id="fCategory"></select></label>
+          <label class="field"><span>季节</span><select id="fSeason"></select></label>
+          <label class="field field-full"><span>颜色</span><div class="color-picker" id="colorPicker"></div></label>
+          <label class="field"><span>品牌</span><input type="text" id="fBrand" placeholder="选填" maxlength="30"></label>
+          <label class="field"><span>购入价（¥）</span><input type="number" id="fPrice" placeholder="0" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="field"><span>购入日期</span><input type="date" id="fDate"></label>
+          <label class="field"><span>已穿次数</span><input type="number" id="fWear" value="0" min="0" step="1" inputmode="numeric"></label>
+          <label class="field field-full"><span>标签</span><input type="text" id="fTags" placeholder="用逗号分隔，例如：通勤, 常穿, 打折入的" maxlength="100"></label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="btnSave">保存到衣橱</button>
+          <button type="button" class="btn btn-ghost" id="btnReset">清空重填</button>
+          <button type="button" class="btn btn-danger-ghost" id="btnDelete" hidden>删除这件</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="page" id="page-outfit">
+      <div class="page-head">
+        <h1>今日穿搭</h1>
+        <p>选几件组成一套，记下今天穿了什么</p>
+      </div>
+
+      <div class="outfit-card">
+        <div class="outfit-meta">
+          <label class="field"><span>日期</span><input type="date" id="outfitDate"></label>
+          <label class="field"><span>备注</span><input type="text" id="outfitNote" placeholder="例如：上班 / 下雨 / 见朋友" maxlength="60"></label>
+        </div>
+        <div class="outfit-picker-head">
+          <h2>选择单品 <small id="pickCount">已选 0 件</small></h2>
+          <button class="text-btn" id="btnClearPick">取消选择</button>
+        </div>
+        <div id="pickGrid" class="pick-grid"></div>
+        <div class="outfit-actions">
+          <button class="btn btn-primary" id="btnSaveOutfit">保存这套穿搭</button>
+          <span class="hint" id="outfitHint">选中单品后，穿着次数会自动 +1</span>
+        </div>
+      </div>
+
+      <div class="section-head"><h2>穿搭记录</h2><span id="outfitCount"></span></div>
+      <div id="outfitList" class="outfit-list"></div>
+      <div id="outfitEmpty" class="empty-state small" hidden><p>还没有记录，从上面选一套开始吧</p></div>
+    </section>
+
+    <section class="page" id="page-stats">
+      <div class="page-head">
+        <h1>衣橱统计</h1>
+        <p>看看这些衣服，陪你度过了多少天</p>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi"><span>总件数</span><strong id="kpiCount">0</strong><small>件单品</small></div>
+        <div class="kpi"><span>总花费</span><strong id="kpiSpend">¥0</strong><small>按购入价累计</small></div>
+        <div class="kpi"><span>平均单价</span><strong id="kpiAvg">¥0</strong><small>每件</small></div>
+        <div class="kpi"><span>穿搭记录</span><strong id="kpiOutfits">0</strong><small>套</small></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <h2>分类分布</h2>
+          <div id="categoryBars" class="bars"></div>
+        </div>
+        <div class="stat-card">
+          <h2>颜色分布</h2>
+          <div id="colorBars" class="bars"></div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <h2>最常穿的 5 件</h2>
+          <div id="topWorn" class="rank-list"></div>
+        </div>
+        <div class="stat-card">
+          <h2>压箱底提醒</h2>
+          <div id="leastWorn" class="rank-list"></div>
+        </div>
+      </div>
+
+      <div class="stat-card cloud-card">
+        <div class="cloud-head">
+          <h2>云端同步</h2>
+          <div class="cloud-head-right">
+            <button class="text-btn" id="btnCloudResetConfig" hidden>更换配置</button>
+            <span class="cloud-state" id="cloudState">未启用</span>
+          </div>
+        </div>
+
+        <div class="warn">实测你的网络连不上 Supabase（国内网络拦截），<b>云端同步暂不可用</b>。本衣橱采用「<b>本地 + 备份</b>」方案即可长久免费：数据全存在本机，定期点「导出备份」并把文件微信发给自己，就永远不会丢。下面的云端表单可忽略。</div>
+
+        <div id="cloudNoConfig" hidden>
+          <p>按《Supabase 配置指引》拿到 Project URL 和 anon public key，直接填在这里即可启用，不用改文件也不用重新部署。配置只保存在这台设备。</p>
+          <div class="cloud-form">
+            <label class="field"><span>Project URL</span><input type="url" id="cfgUrl" placeholder="https://xxxx.supabase.co" autocomplete="off" spellcheck="false"></label>
+            <label class="field"><span>anon public key</span><input type="text" id="cfgKey" placeholder="eyJ..." autocomplete="off" spellcheck="false"></label>
+          </div>
+          <div class="cloud-actions">
+            <button class="btn btn-primary" id="btnCloudSaveConfig">保存并启用</button>
+          </div>
+          <div class="warn">只要 <b>anon public</b>。页面下方的 <code>service_role</code> 是管理员密钥，绝对不要填进来。</div>
+        </div>
+
+        <div id="cloudSignedOut" hidden>
+          <p>登录后数据存到云端，换手机、清缓存、换网络都不丢。没网时照样离线用，联网后自动补传。</p>
+          <div class="cloud-form">
+            <label class="field"><span>邮箱</span><input type="email" id="cloudEmail" placeholder="you@example.com" autocomplete="email"></label>
+            <label class="field"><span>密码</span><input type="password" id="cloudPassword" placeholder="至少 6 位" autocomplete="current-password"></label>
+          </div>
+          <div class="cloud-actions">
+            <button class="btn btn-primary" id="btnCloudSignIn">登录</button>
+            <button class="btn btn-ghost" id="btnCloudSignUp">注册新账号</button>
+          </div>
+        </div>
+
+        <div id="cloudSignedIn" hidden>
+          <p class="cloud-account">已登录：<b id="cloudEmailText"></b></p>
+          <p class="cloud-meta" id="cloudMeta"></p>
+          <div class="cloud-actions">
+            <button class="btn btn-ghost" id="btnCloudSyncNow">立即同步</button>
+            <button class="btn btn-ghost" id="btnCloudPull">从云端刷新</button>
+            <button class="btn btn-danger-ghost" id="btnCloudSignOut">退出登录</button>
+          </div>
+        </div>
+        <p class="cloud-msg" id="cloudMsg" hidden></p>
+      </div>
+
+      <div class="stat-card data-card">
+        <h2>数据管理</h2>
+        <p>数据保存在<b>本机</b>（这台设备的浏览器里，不依赖任何服务器，永久免费）。换手机/平板：在新设备打开本页 → 点「导入备份」选旧设备导出的文件即可全部搬过去。建议<b>每周</b>导出一次备份，并微信发给自己留存。</p>
+        <p class="backup-remind" id="backupRemind" hidden></p>
+
+        <div class="storage-panel">
+          <div class="storage-head">
+            <h3>数据存在哪里</h3>
+            <button class="text-btn" id="btnCopyOrigin">复制当前地址</button>
+          </div>
+          <dl id="storageList"></dl>
+          <p class="storage-warn" id="storageWarn" hidden></p>
+        </div>
+
+        <div class="data-actions">
+          <button class="btn btn-ghost" id="btnExport">导出备份</button>
+          <button class="btn btn-ghost" id="btnImport">导入备份</button>
+          <button class="btn btn-ghost" id="btnDemo">载入示例数据</button>
+          <button class="btn btn-danger-ghost" id="btnClearAll">清空全部数据</button>
+        </div>
+        <input type="file" id="importInput" accept="application/json,.json" hidden>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="modal-backdrop" id="detailModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailName">
+    <button class="modal-close" id="detailClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <div class="detail-photo" id="detailPhoto"></div>
+    <div class="detail-body">
+      <h2 id="detailName"></h2>
+      <div class="detail-tags" id="detailTags"></div>
+      <dl class="detail-list" id="detailList"></dl>
+      <div class="detail-actions">
+        <button class="btn btn-primary" id="btnDetailWear">记一次穿着</button>
+        <button class="btn btn-ghost" id="btnDetailEdit">编辑</button>
+        <button class="btn btn-danger-ghost" id="btnDetailDelete">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="cloud.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
