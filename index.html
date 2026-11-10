@@ -247,6 +247,17 @@
       <div class="stat-card data-card">
         <h2>数据管理</h2>
         <p>数据保存在<b>本机</b>（这台设备的浏览器里，不依赖任何服务器，永久免费）。换手机/平板：在新设备打开本页 → 点「导入备份」选旧设备导出的文件即可全部搬过去。建议<b>每周</b>导出一次备份，并微信发给自己留存。</p>
+
+        <div class="warn caution">
+          <b>⚠️ 重要提醒（关乎数据安危，务必看）：</b>
+          <ul>
+            <li><b>关页面 / 关浏览器不会丢数据</b>，衣橱已支持离线打开。</li>
+            <li><b>iPhone 上「删除主屏幕图标」会连同数据一起清空！</b>要删图标前，一定先点「导出备份」留一份。</li>
+            <li>在 Safari「<b>清除历史记录与网站数据</b>」、或手机「设置- Safari - 清除」会<b>删除全部衣橱数据</b>，操作前先备份。</li>
+            <li>数据是<b>每台设备各一份</b>，云端同步在你的网络下用不了，换设备请用「导入备份」搬运，不要以为自动同步。</li>
+            <li><b>每周导出备份 + 微信发「文件传输助手」</b>，是防止数据丢失的唯一保险。</li>
+          </ul>
+        </div>
         <p class="backup-remind" id="backupRemind" hidden></p>
 
         <div class="storage-panel">
@@ -263,6 +274,7 @@
           <button class="btn btn-ghost" id="btnImport">导入备份</button>
           <button class="btn btn-ghost" id="btnDemo">载入示例数据</button>
           <button class="btn btn-danger-ghost" id="btnClearAll">清空全部数据</button>
+          <a class="btn btn-ghost" href="backup-guide.html" target="_blank" rel="noopener">📖 查看完整备份指引</a>
         </div>
         <input type="file" id="importInput" accept="application/json,.json" hidden>
       </div>
