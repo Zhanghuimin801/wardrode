@@ -12,6 +12,7 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="smart.css">
 </head>
 <body>
 <div class="app">
@@ -42,6 +43,10 @@
       <button class="tab" data-page="outfit">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4 4 6.5 6 10l2.5-.7L12 4l3 5.3L17.5 10l2-3.5L16 4a2 2 0 0 1-4 0 2 2 0 0 1-4 0Z"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/></svg>
         <span>穿搭</span>
+      </button>
+      <button class="tab" data-page="buy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16l-1.2 12H5.2L4 7Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg>
+        <span>想买</span>
       </button>
       <button class="tab" data-page="stats">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
@@ -112,13 +117,21 @@
             </span>
           </button>
           <input type="file" id="photoInput" accept="image/*" hidden>
-          <button type="button" class="photo-remove" id="photoRemove" hidden>移除照片</button>
+          <div class="photo-tools">
+            <button type="button" class="tool-btn" id="btnCrop" disabled>手动裁剪</button>
+            <button type="button" class="tool-btn" id="btnCutout" disabled>一键去背景</button>
+            <button type="button" class="tool-btn" id="btnDetectColor" disabled>识别颜色</button>
+            <button type="button" class="photo-remove" id="photoRemove" hidden>移除照片</button>
+          </div>
+          <p class="detect-hint" id="detectHint">上传照片后，颜色会自动识别并预填；识别错了点一下色块就能改。</p>
         </div>
 
         <div class="field-grid">
           <label class="field field-full"><span>名称 <i>*</i></span><input type="text" id="fName" placeholder="例如：米白色亚麻衬衫" required maxlength="40"></label>
           <label class="field"><span>类别</span><select id="fCategory"></select></label>
+          <label class="field"><span>细分类</span><select id="fSubCategory"></select></label>
           <label class="field"><span>季节</span><select id="fSeason"></select></label>
+          <label class="field"><span>来源 / 链接</span><input type="text" id="fSource" placeholder="选填，如淘宝、京东" maxlength="200"></label>
           <label class="field field-full"><span>颜色</span><div class="color-picker" id="colorPicker"></div></label>
           <label class="field"><span>品牌</span><input type="text" id="fBrand" placeholder="选填" maxlength="30"></label>
           <label class="field"><span>购入价（¥）</span><input type="number" id="fPrice" placeholder="0" min="0" step="0.01" inputmode="decimal"></label>
@@ -141,6 +154,40 @@
         <p>选几件组成一套，记下今天穿了什么</p>
       </div>
 
+      <div class="smart-card">
+        <div class="smart-head">
+          <h2>智能搭配</h2>
+          <span class="smart-badge">本机运算 · 不花流量</span>
+        </div>
+        <div class="weather-now" id="weatherNow">天气读取中…</div>
+        <div class="weather-ctrl">
+          <label class="field"><span>城市</span><select id="weatherCity">
+            <option value="auto">自动定位</option>
+            <option value="39.90,116.41">北京</option>
+            <option value="31.23,121.47">上海</option>
+            <option value="23.13,113.26">广州</option>
+            <option value="22.54,114.06">深圳</option>
+            <option value="30.57,104.07">成都</option>
+            <option value="30.27,120.15">杭州</option>
+            <option value="30.59,114.31">武汉</option>
+            <option value="34.34,108.94">西安</option>
+          </select></label>
+          <label class="field"><span>体感</span><select id="weatherManual">
+            <option value="auto">跟随天气</option>
+            <option value="cold">很冷（&lt;5℃）</option>
+            <option value="cool">凉（5~15℃）</option>
+            <option value="mild">舒适（15~25℃）</option>
+            <option value="hot">热（&gt;25℃）</option>
+          </select></label>
+        </div>
+        <p class="smart-note">按天气、季节、颜色和谐度和「最久没穿」，从你自己的衣橱里挑 3 套。推荐错了可以直接改，也能一键套用。</p>
+        <div class="smart-actions">
+          <button class="btn btn-primary" id="btnSuggest">帮我搭 3 套</button>
+          <button class="btn btn-ghost" id="btnWeatherRefresh">刷新天气</button>
+        </div>
+        <div id="suggestList" class="suggest-list"></div>
+      </div>
+
       <div class="outfit-card">
         <div class="outfit-meta">
           <label class="field"><span>日期</span><input type="date" id="outfitDate"></label>
@@ -160,6 +207,51 @@
       <div class="section-head"><h2>穿搭记录</h2><span id="outfitCount"></span></div>
       <div id="outfitList" class="outfit-list"></div>
       <div id="outfitEmpty" class="empty-state small" hidden><p>还没有记录，从上面选一套开始吧</p></div>
+    </section>
+
+    <section class="page" id="page-buy">
+      <div class="page-head">
+        <h1>想买清单</h1>
+        <p>先看家里有没有能搭的，再决定要不要下单</p>
+      </div>
+
+      <div class="smart-card">
+        <div class="smart-head"><h2>① 粘贴商品分享文字</h2></div>
+        <p class="smart-note">在淘宝 / 京东 / 拼多多里点「分享 → 复制链接」，把复制到的<b>整段文字</b>粘进来，会自动提取商品名、价格、平台和链接。<br><b>说明：</b>浏览器读不了购物 App 的商品页（平台会拦截跨域请求），所以价格是从分享文字里取的；取不到就手填一下。</p>
+        <textarea id="buyText" rows="4" placeholder="粘贴分享文字，例如：&#10;【某某女装 米白色针织开衫】¥129 复制这段 http… 打开淘宝"></textarea>
+        <div class="buy-upload">
+          <label class="tool-btn" for="buyImage">传商品截图（可选，自动认颜色）</label>
+          <input type="file" id="buyImage" accept="image/*" hidden>
+          <img id="buyImagePreview" hidden alt="商品截图预览">
+          <button class="text-btn" id="buyImageRemove" hidden>移除截图</button>
+        </div>
+        <div class="smart-actions">
+          <button class="btn btn-primary" id="btnBuyParse">识别并填入</button>
+          <button class="btn btn-ghost" id="btnBuyClear">清空</button>
+        </div>
+      </div>
+
+      <div class="smart-card">
+        <div class="smart-head"><h2>② 确认信息</h2><span class="smart-badge">识别错了直接改</span></div>
+        <div class="field-grid">
+          <label class="field field-full"><span>名称</span><input type="text" id="bName" placeholder="商品名" maxlength="60"></label>
+          <label class="field"><span>类别</span><select id="bCategory"></select></label>
+          <label class="field"><span>颜色</span><select id="bColor"></select></label>
+          <label class="field"><span>价格（¥）</span><input type="number" id="bPrice" placeholder="0" min="0" step="0.01" inputmode="decimal"></label>
+          <label class="field"><span>季节</span><select id="bSeason"></select></label>
+          <label class="field field-full"><span>链接 / 来源</span><input type="text" id="bLink" placeholder="选填" maxlength="300"></label>
+        </div>
+        <div class="smart-actions">
+          <button class="btn btn-primary" id="btnBuyJudge">帮我判断值不值得买</button>
+          <button class="btn btn-ghost" id="btnBuyAdd">直接加入衣橱</button>
+        </div>
+      </div>
+
+      <div class="smart-card" id="buyResultCard" hidden>
+        <div class="smart-head"><h2>③ 判断结果</h2></div>
+        <div id="buyVerdict"></div>
+        <div id="buyMatches"></div>
+      </div>
     </section>
 
     <section class="page" id="page-stats">
@@ -274,7 +366,7 @@
           <button class="btn btn-ghost" id="btnImport">导入备份</button>
           <button class="btn btn-ghost" id="btnDemo">载入示例数据</button>
           <button class="btn btn-danger-ghost" id="btnClearAll">清空全部数据</button>
-          <a class="btn btn-ghost" href="backup-guide.html" target="_blank" rel="noopener">📖 查看完整备份指引</a>
+          <a class="btn btn-ghost" href="backup-guide.html" target="_blank" rel="noopener">查看完整备份指引</a>
         </div>
         <input type="file" id="importInput" accept="application/json,.json" hidden>
       </div>
@@ -302,10 +394,26 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="cropModal" hidden>
+  <div class="crop-modal" role="dialog" aria-modal="true" aria-label="裁剪照片">
+    <div class="crop-head"><h2>裁剪照片</h2><span>拖动图片调整位置</span></div>
+    <div class="crop-stage" id="cropStage">
+      <canvas id="cropCanvas"></canvas>
+      <div class="crop-frame" id="cropFrame"></div>
+    </div>
+    <label class="crop-zoom"><span>缩放</span><input type="range" id="cropZoom" min="100" max="300" value="100"></label>
+    <div class="crop-actions">
+      <button class="btn btn-ghost" id="cropCancel">取消</button>
+      <button class="btn btn-primary" id="cropApply">应用裁剪</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
 <script src="config.js"></script>
 <script src="cloud.js"></script>
 <script src="app.js"></script>
+<script src="smart.js"></script>
 </body>
 </html>

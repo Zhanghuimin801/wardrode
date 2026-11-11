@@ -2,6 +2,17 @@
   'use strict';
 
   var CATEGORIES = ['上衣', '下装', '外套', '连衣裙', '鞋履', '包袋', '配饰', '其他'];
+  /* 细分类：鞋 / 包 / 饰品进一步细分，大类保持不变以兼容已有数据 */
+  var SUBCATEGORIES = {
+    '上衣': ['T恤', '衬衫', '针织衫', '卫衣', '背心', 'Polo衫'],
+    '下装': ['牛仔裤', '休闲裤', '半身裙', '短裤', '阔腿裤', '打底裤'],
+    '外套': ['西装', '风衣', '夹克', '大衣', '羽绒服', '针织开衫'],
+    '连衣裙': ['长裙', '短裙', '衬衫裙'],
+    '鞋履': ['运动鞋', '单鞋', '靴子', '凉鞋', '高跟鞋', '拖鞋'],
+    '包袋': ['手提包', '斜挎包', '双肩包', '托特包', '钱包'],
+    '配饰': ['项链', '耳饰', '帽子', '围巾', '腰带', '手表', '眼镜'],
+    '其他': ['其他']
+  };
   var SEASONS = ['四季', '春', '夏', '秋', '冬'];
   var COLORS = [
     { name: '黑色', hex: '#2B2B2B' }, { name: '白色', hex: '#F7F6F2' },
@@ -292,7 +303,8 @@
     if (!item.photo || String(item.photo).indexOf('data:image') !== 0) {
       return '<span class="' + (cls || 'placeholder') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5a2 2 0 1 1 2-2c0 1.2-1 2-2 2v3.2"/><path d="M12 10.7 3.6 16a1 1 0 0 0 .5 1.8h15.8a1 1 0 0 0 .5-1.8L12 10.7Z"/></svg></span>';
     }
-    return '<img src="' + esc(item.photo) + '" alt="' + esc(item.name) + '">';
+    /* base64 字符集不含 HTML 特殊字符，可直出，省掉对几十万字符做正则替换 */
+    return '<img src="' + item.photo + '" alt="' + esc(item.name) + '" loading="lazy" decoding="async">';
   }
 
   function itemCard(item) {
@@ -356,7 +368,7 @@
     var html = state.items.map(function (it) {
       var sel = state.pickedIds.indexOf(it.id) >= 0;
       var inner = it.photo && String(it.photo).indexOf('data:image') === 0
-        ? '<img src="' + esc(it.photo) + '" alt="' + esc(it.name) + '">'
+        ? '<img src="' + it.photo + '" alt="' + esc(it.name) + '" loading="lazy" decoding="async">'
         : '<span class="ph"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 7.5a2 2 0 1 1 2-2c0 1.2-1 2-2 2v3.2"/><path d="M12 10.7 3.6 16a1 1 0 0 0 .5 1.8h15.8a1 1 0 0 0 .5-1.8L12 10.7Z"/></svg></span>';
       return '<button class="pick-card' + (sel ? ' is-selected' : '') + '" data-id="' + esc(it.id) + '">' +
         inner + '<span class="pick-check">✓</span><span class="pick-label">' + esc(it.name) + '</span></button>';
@@ -377,7 +389,7 @@
       var thumbs = (o.itemIds || []).slice(0, 4).map(function (id) {
         var it = state.items.find(function (x) { return x.id === id; });
         if (!it) return '<span class="thumb">?</span>';
-        return '<span class="thumb">' + (it.photo && String(it.photo).indexOf('data:image') === 0 ? '<img src="' + esc(it.photo) + '" alt="">' : '') + '</span>';
+        return '<span class="thumb">' + (it.photo && String(it.photo).indexOf('data:image') === 0 ? '<img src="' + it.photo + '" alt="" loading="lazy" decoding="async">' : '') + '</span>';
       }).join('');
       return '<div class="outfit-row"><div class="outfit-thumbs">' + thumbs + '</div>' +
         '<div class="outfit-text"><strong>' + fmtDate(o.date) + (o.note ? ' · ' + esc(o.note) : '') + '</strong>' +
@@ -510,7 +522,17 @@
     document.body.removeChild(ta);
   }
 
-  function renderAll() { renderCloset(); renderPicker(); renderOutfits(); renderStats(); }
+  /* 只重绘"当前可见"的那一页。旧版一次重绘 4 页 + 全部照片 base64，
+     在手机上随单品数量增长会明显掉帧。切页时 switchPage 会各自渲染目标页。 */
+  function renderAll() {
+    var active = document.querySelector('.page.is-active');
+    var name = active ? active.id.replace('page-', '') : 'closet';
+    if (name === 'closet') renderCloset();
+    else if (name === 'outfit') { renderPicker(); renderOutfits(); }
+    else if (name === 'stats') renderStats();
+    if (window.WardrobeSmart && window.WardrobeSmart.onDataChange) window.WardrobeSmart.onDataChange();
+    try { window.dispatchEvent(new CustomEvent('wardrobe:change')); } catch (e) {}
+  }
 
   /* ---------- form ---------- */
 
@@ -526,6 +548,22 @@
       return '<button type="button" class="color-option' + (c.hex === 'multi' ? ' is-multi' : '') + '" data-color="' + esc(c.name) + '" title="' + esc(c.name) + '" style="' + bg + '"></button>';
     }).join('');
     setFormColor('黑色');
+    fillSubCategories();
+    /* 按当前月份预填季节，识别错了可以自己改 */
+    var m = new Date().getMonth() + 1;
+    $('fSeason').value = (m >= 3 && m <= 5) ? '春' : (m >= 6 && m <= 8) ? '夏' : (m >= 9 && m <= 11) ? '秋' : '冬';
+  }
+
+  function fillSubCategories() {
+    var cat = $('fCategory').value;
+    var arr = SUBCATEGORIES[cat] || ['其他'];
+    var el = $('fSubCategory');
+    if (!el) return;
+    var keep = el.value;
+    el.innerHTML = '<option value="">未细分</option>' + arr.map(function (v) {
+      return '<option value="' + esc(v) + '">' + esc(v) + '</option>';
+    }).join('');
+    el.value = arr.indexOf(keep) >= 0 ? keep : '';
   }
 
   function setFormColor(name) {
@@ -543,11 +581,13 @@
     } else {
       img.removeAttribute('src'); img.hidden = true; hint.hidden = false; $('photoRemove').hidden = true;
     }
+    try { window.dispatchEvent(new CustomEvent('wardrobe:photo')); } catch (e) {}
   }
 
   function resetForm() {
     state.editingId = null;
     $('itemForm').reset();
+    fillSubCategories();
     $('fDate').value = todayISO();
     $('fWear').value = 0;
     setFormColor('黑色');
@@ -564,8 +604,11 @@
     state.editingId = id;
     $('fName').value = it.name || '';
     $('fCategory').value = it.category || '上衣';
+    fillSubCategories();
+    if ($('fSubCategory')) $('fSubCategory').value = it.subCategory || '';
     $('fSeason').value = it.season || '四季';
     $('fBrand').value = it.brand || '';
+    $('fSource').value = it.source || '';
     $('fPrice').value = it.price || '';
     $('fDate').value = it.purchaseDate || '';
     $('fWear').value = it.wearCount || 0;
@@ -584,9 +627,11 @@
       id: state.editingId || uid(),
       name: $('fName').value.trim(),
       category: $('fCategory').value,
+      subCategory: $('fSubCategory') ? $('fSubCategory').value : '',
       season: $('fSeason').value,
       color: state.formColor,
       brand: $('fBrand').value.trim(),
+      source: $('fSource').value.trim(),
       price: Number($('fPrice').value) || 0,
       purchaseDate: $('fDate').value,
       wearCount: Math.max(0, Number($('fWear').value) || 0),
@@ -607,10 +652,12 @@
     $('detailName').textContent = it.name;
     var pills = ['<span class="pill accent">' + esc(it.category) + '</span>',
       '<span class="pill">' + esc(it.color) + '</span>', '<span class="pill">' + esc(it.season) + '</span>']
+      .concat(it.subCategory ? ['<span class="pill">' + esc(it.subCategory) + '</span>'] : [])
       .concat((it.tags || []).map(function (t) { return '<span class="pill">' + esc(t) + '</span>'; }));
     $('detailTags').innerHTML = pills.join('');
     var rows = [
-      ['品牌', it.brand || '未填写'], ['购入价', it.price ? fmtMoney(it.price) : '未填写'],
+      ['品牌', it.brand || '未填写'], ['来源', it.source || '未填写'],
+      ['购入价', it.price ? fmtMoney(it.price) : '未填写'],
       ['购入日期', fmtDate(it.purchaseDate)], ['已穿次数', (it.wearCount || 0) + ' 次'],
       ['最近穿着', fmtDate(it.lastWornAt)], ['加入时间', fmtDate(new Date(it.createdAt || Date.now()).toISOString().slice(0, 10))]
     ];
@@ -644,7 +691,9 @@
     if (name === 'closet') renderCloset();
     if (name === 'outfit') { renderPicker(); renderOutfits(); }
     if (name === 'stats') renderStats();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.WardrobeSmart && window.WardrobeSmart.onPage) window.WardrobeSmart.onPage(name);
+    window.scrollTo(0, 0);
+    try { history.replaceState(null, '', '#' + name); } catch (e) {}
   }
 
   /* ---------- data management ---------- */
@@ -821,7 +870,12 @@
         renderCloset();
       });
     });
-    $('searchInput').addEventListener('input', function (e) { state.filters.q = e.target.value; renderCloset(); });
+    var searchTimer = null;
+    $('searchInput').addEventListener('input', function (e) {
+      var v = e.target.value;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () { state.filters.q = v; renderCloset(); }, 120);
+    });
 
     $('itemGrid').addEventListener('click', function (e) {
       var card = e.target.closest('.item-card');
@@ -832,6 +886,7 @@
       var b = e.target.closest('.color-option');
       if (b) setFormColor(b.dataset.color);
     });
+    $('fCategory').addEventListener('change', fillSubCategories);
     $('photoDrop').addEventListener('click', function () { $('photoInput').click(); });
     $('photoRemove').addEventListener('click', function () { setPhoto(''); $('photoInput').value = ''; });
     $('photoInput').addEventListener('change', async function (e) {
@@ -839,8 +894,8 @@
       if (!f) return;
       if (!/^image\//.test(f.type)) { toast('请选择图片文件'); return; }
       try {
-        var max = state.storageMode === 'local' ? 700 : 1100;
-        var q = state.storageMode === 'local' ? .72 : .82;
+        var max = state.storageMode === 'local' ? 640 : 900;
+        var q = state.storageMode === 'local' ? .68 : .76;
         setPhoto(await compressImage(f, max, q));
         toast('照片已压缩，保存后写入本机');
       } catch (err) { toast(err.message); }
@@ -995,7 +1050,7 @@
     var params = new URLSearchParams(location.search);
     if (params.get('demo') === '1' && state.items.length === 0) await loadDemo();
     var hashPage = (location.hash || '').replace('#', '');
-    if (['closet', 'add', 'outfit', 'stats'].indexOf(hashPage) >= 0) switchPage(hashPage);
+    if (['closet', 'add', 'outfit', 'buy', 'stats'].indexOf(hashPage) >= 0) switchPage(hashPage);
 
     if (Cloud) {
       Cloud.onStatus(function () { renderCloudUI(); renderStats(); });
@@ -1016,5 +1071,19 @@
     }
   }
 
-  init();
+  /* 智能模块 smart.js 通过这里读写数据，不重复实现一套存储 */
+  window.WardrobeApp = {
+    COLORS: COLORS, CATEGORIES: CATEGORIES, SEASONS: SEASONS, SUBCATEGORIES: SUBCATEGORIES,
+    getItems: function () { return state.items; },
+    getOutfits: function () { return state.outfits; },
+    getState: function () { return state; },
+    renderAll: renderAll, switchPage: switchPage, toast: toast,
+    saveItem: saveItem, removeItem: removeItem,
+    setFormColor: setFormColor, setPhoto: setPhoto, resetForm: resetForm,
+    photoMarkup: photoMarkup, todayISO: todayISO,
+    pickItems: function (ids) { state.pickedIds = ids.slice(); renderPicker(); },
+    colorHex: colorHex, fmtMoney: fmtMoney, uid: uid, esc: esc, $: $,
+    ready: null
+  };
+  window.WardrobeApp.ready = init();
 })();

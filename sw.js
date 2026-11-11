@@ -1,6 +1,7 @@
-var CACHE = 'wardrobe-v4';
+var CACHE = 'wardrobe-v5';
 var ASSETS = [
-  './', './index.html', './styles.css', './app.js', './config.js', './cloud.js',
+  './', './index.html', './styles.css', './smart.css', './app.js', './smart.js',
+  './config.js', './cloud.js', './backup-guide.html',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
 ];
 

@@ -27,8 +27,13 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* 去掉 iOS 双击缩放带来的 300ms 点击延迟，操作更跟手 */
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
 }
-button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; touch-action: manipulation; }
+/* iOS Safari：输入框字号 <16px 会在聚焦时自动放大整页，这里强制 16px */
+input, select, textarea { font-size: 16px; }
 button { cursor: pointer; border: none; background: none; }
 h1, h2, h3, p, dl, dd, dt { margin: 0; }
 [hidden] { display: none !important; }
@@ -62,9 +67,8 @@ h1, h2, h3, p, dl, dd, dt { margin: 0; }
 
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  background: rgba(255, 255, 255, .96);
-  backdrop-filter: blur(14px);
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: #FFFFFF;
   border-top: 1px solid var(--line);
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
 }
@@ -78,9 +82,10 @@ h1, h2, h3, p, dl, dd, dt { margin: 0; }
 .tab.is-active { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 
 .main { max-width: 1120px; margin: 0 auto; padding: 22px 18px 110px; }
-.page { display: none; animation: fade .22s ease; }
-.page.is-active { display: block; }
-@keyframes fade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+/* 切页动画只用 opacity，避免 transform 触发整页合成层造成 iOS 掉帧 */
+.page { display: none; }
+.page.is-active { display: block; animation: fade .16s ease; }
+@keyframes fade { from { opacity: .55; } to { opacity: 1; } }
 
 .page-head { margin-bottom: 18px; }
 .page-head h1 { font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
@@ -110,7 +115,7 @@ h1, h2, h3, p, dl, dd, dt { margin: 0; }
   border-radius: var(--radius); padding: 14px; margin-bottom: 18px; box-shadow: var(--shadow);
 }
 .search-wrap { display: flex; align-items: center; gap: 9px; padding: 0 12px; height: 42px; background: var(--surface-2); border-radius: 10px; color: var(--muted); }
-.search-wrap input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 14px; }
+.search-wrap input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 16px; }
 .search-wrap input::placeholder { color: #A6A199; }
 .filter-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
 .select-wrap { display: flex; flex-direction: column; gap: 4px; }
@@ -132,9 +137,10 @@ select:focus, .field input:focus { border-color: var(--accent); box-shadow: 0 0 
 .item-card {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   overflow: hidden; text-align: left; box-shadow: var(--shadow);
-  transition: transform .15s, box-shadow .15s; width: 100%; display: block; padding: 0;
+  width: 100%; display: block; padding: 0;
+  content-visibility: auto; contain-intrinsic-size: 240px 320px;
 }
-.item-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(38, 36, 31, .1); }
+.item-card:active { opacity: .82; }
 .item-photo {
   position: relative; aspect-ratio: 3 / 4; width: 100%;
   background: var(--surface-2); display: grid; place-items: center; overflow: hidden;
@@ -305,6 +311,10 @@ select:focus, .field input:focus { border-color: var(--accent); box-shadow: 0 0 
 .cloud-msg { margin-top: 12px !important; padding: 9px 11px; border-radius: 9px; font-size: 12px; background: var(--accent-soft); color: var(--accent-dark) !important; }
 .cloud-card .warn { margin-top: 12px; padding: 10px 12px; border: 1px solid #F0DFC4; border-radius: 9px; background: #FFF8EE; color: #7A5B2E; font-size: 11px; line-height: 1.65; }
 .cloud-card .warn code { background: rgba(255,255,255,.6); }
+.data-card .warn { margin-top: 12px; padding: 11px 13px; border: 1px solid #F0DFC4; border-radius: 9px; background: #FFF8EE; color: #7A5B2E; font-size: 11.5px; line-height: 1.7; }
+.data-card .warn ul { margin: 7px 0 0; padding-left: 18px; }
+.data-card .warn li { margin: 4px 0; }
+.data-card .warn b { color: #8A4B00; }
 @media (max-width: 600px) { .cloud-form { grid-template-columns: 1fr; } }
 
 .storage-panel { margin-top: 18px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
